@@ -4,8 +4,14 @@ const { Blockchain, Block } = require('./simpleChain');
 // Initialization
 let blockchain = new Blockchain();
 
-for (let i = 0; i <= 10; i++) {
-  blockchain.addBlock(new Block("lorem ipsum dolor: "+i));
-}
+(function theLoop (i) {
+  setTimeout(() => {
+    blockchain.addBlock(new Block(`Test data ${i}`)).then(() => {
+      if (--i) {
+        theLoop(i)
+      }
+    })
+  }, 100);
+})(10);
 
-blockchain.validateChain();
+setTimeout(() => blockchain.validateChain(), 2000);
