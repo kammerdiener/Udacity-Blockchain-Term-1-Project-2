@@ -32,7 +32,7 @@ async function addLevelDBData(key,value){
 }
 
 // Get data from levelDB with key
-function getLevelDBData(key){
+function getBlock(key){
   return new Promise((resolve, reject) => {
     console.log(key);
     db.get(key)
@@ -45,7 +45,7 @@ function getLevelDBData(key){
   });
 }
 
-function getCurrentHeight() {
+function getBlockHeight() {
   return new Promise((resolve, reject) => {
     let height = -1;
 
@@ -79,7 +79,7 @@ class Block{
 
 class Blockchain{
   constructor(){
-    getCurrentHeight()
+    getBlockHeight()
       .then((height) => {
         if (height === -1) {
           let genesisBlock = new Block("Genesis Block");
@@ -99,13 +99,13 @@ class Blockchain{
 
   // Add new block
   async addBlock(newBlock) {
-    const height = parseInt(await getCurrentHeight());
+    const height = parseInt(await getBlockHeight());
 
     newBlock.height = height + 1;
     newBlock.time = new Date().getTime().toString().slice(0, -3);
 
     if (newBlock.height > 0) {
-      let prevBlock = await getLevelDBData(height);
+      let prevBlock = await getBlock(height);
       prevBlock = JSON.parse(prevBlock);
       newBlock.previousBlockHash = prevBlock.hash;
     }
@@ -119,7 +119,7 @@ class Blockchain{
 
   // validate block
   async validateBlock(blockHeight) {
-    let block = await getLevelDBData(blockHeight);
+    let block = await getBlock(blockHeight);
     block = JSON.parse(block);
     let blockHash = block.hash;
     block.hash = '';
@@ -138,15 +138,14 @@ class Blockchain{
   async validateChain() {
     let previousHash = '';
     let hasError = false;
-    let isValidBlock = false;
 
-    const height = await getCurrentHeight();
+    const height = await getBlockHeight();
 
-    for (let i = 0; i < height; i++) {
-      getLevelDBData(i)
-        .then((block) => {
+    for (let i = 0; i <= height; i++) {
+      getBlock(i)
+        .then(async (block) => {
           block = JSON.parse(block);
-          isValidBlock = this.validateBlock(block.height);
+          const isValidBlock = await this.validateBlock(block.height);
 
           if (!isValidBlock) {
             console.log("error on block: " + i);
